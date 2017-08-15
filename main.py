@@ -4,7 +4,7 @@ import os
 import subprocess
 import urllib.parse
 from wox import Wox
-from os import listdir
+from os import walk
 from os.path import isfile, join
 import winreg
 
@@ -16,14 +16,17 @@ class Kitty(Wox):
     def load_session(self, kitty_path, session_location='file'):
         if session_location == 'file':
             session_path = os.path.join(kitty_path, "Sessions")
-            files = [urllib.parse.unquote(f) for f in listdir(session_path) if isfile(join(session_path, f))]
-            return files
+            sessionlist=[]
+            for root, directories, filenames in walk(session_path):
+                for filename in filenames:
+                    sessionlist.append((root.replace(session_path,'',1).replace("\\",''),filename))
+            return sessionlist
         else:
             sessions = []
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\9bis.com\KiTTY\Sessions')
             for i in range(0, winreg.QueryInfoKey(key)[0]):
                 skey_name = winreg.EnumKey(key, i)
-                sessions.append(skey_name)
+                sessions.append('',skey_name)
             key.Close()
             return sessions
 
@@ -37,13 +40,16 @@ class Kitty(Wox):
             kitty_sessions_location = "file"
         sessions = self.load_session(kitty_folder_path, kitty_sessions_location)
         res = []
-        for p in sessions:
-            if query in p:
-                res.append({"Title": p, "IcoPath": "kitty.png", "JsonRPCAction": {"method": "open_session", "parameters": [kitty_path.replace("\\","\\\\"),p]}})
+        for dir, p in sessions:
+            if query.upper() in p.upper():
+                res.append({"Title": p.replace("%20",' '),"IcoPath":"kitty.png","JsonRPCAction":{"method": "open_session", "parameters": [kitty_path.replace("\\","\\\\"),dir,p]}})
         return res
-
-    def open_session(self, kitty_path, session_name):
-        subprocess.call('{} -load "{}"'.format(kitty_path, session_name))
+    
+    def open_session(self, kitty_path, folder_name, session_name):
+        if folder_name is not '':
+            subprocess.Popen('{} -folder "{}" -load "{}"'.format(kitty_path, folder_name, session_name))
+        else:
+            subprocess.Popen('{} -load "{}"'.format(kitty_path,session_name))
 
     def find_kitty_path(self, kitty_folder_path):
         """Returns the full path to the user's kitty executable"""
