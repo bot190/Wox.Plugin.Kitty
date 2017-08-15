@@ -19,14 +19,14 @@ class Kitty(Wox):
             sessionlist=[]
             for root, directories, filenames in walk(session_path):
                 for filename in filenames:
-                    sessionlist.append((root.replace(session_path,'',1).replace("\\",''),filename))
+                    sessionlist.append((root.replace(session_path,'',1).replace("\\",''),urllib.parse.unquote(filename)))
             return sessionlist
         else:
             sessions = []
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r'Software\9bis.com\KiTTY\Sessions')
             for i in range(0, winreg.QueryInfoKey(key)[0]):
                 skey_name = winreg.EnumKey(key, i)
-                sessions.append('',skey_name)
+                sessions.append(('',skey_name))
             key.Close()
             return sessions
 
