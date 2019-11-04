@@ -60,6 +60,17 @@ class Kitty(Wox):
                         },
                     }
                 )
+        if len(res) == 0:
+            res.append(
+                {
+                    "Title": query.replace("%20", " "),
+                    "IcoPath": "kitty.png",
+                    "JsonRPCAction": {
+                        "method": "direct_session",
+                        "parameters": [kitty_path.replace("\\", "\\\\"), query],
+                    },
+                }
+            )
 
         return res
 
@@ -72,6 +83,9 @@ class Kitty(Wox):
             )
         else:
             subprocess.Popen('{} -load "{}"'.format(kitty_path, session_name))
+
+    def direct_session(self, kitty_path, host):
+        subprocess.Popen("{} -ssh {}".format(kitty_path, host))
 
     def find_kitty_path(self, kitty_folder_path):
         """Returns the full path to the user's kitty executable"""
